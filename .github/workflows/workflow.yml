@@ -9,4 +9,37 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: python:3.9-slimززز
+    container: python:3.9-slim
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run tests
+        run: |
+          pip install pytest
+          pytest
+
+      - name: Notify PagerDuty on failure
+        if: failure()
+        uses: ravsamhq/notify-slack-action@master
+        env:
+          PAGERDUTY_ROUTING_KEY: ${{ secrets.PAGERDUTY_ROUTING_KEY }}
+        run: |
+          curl -X POST \
+            --header "Content-Type: application/json" \
+            --data '{
+              "routing_key": "${{ secrets.PAGERDUTY_ROUTING_KEY }}",
+              "event_action": "trigger",
+              "payload": {
+                "summary": "GitHub Actions workflow failed",
+                "severity": "critical",
+                "source": "GitHub Actions"
+              }
+            }' \
+            https://events.pagerduty.com/v2/enqueue
