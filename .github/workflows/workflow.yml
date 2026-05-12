@@ -27,9 +27,6 @@ jobs:
 
       - name: Notify PagerDuty on failure
         if: failure()
-        uses: ravsamhq/notify-slack-action@master
-        env:
-          PAGERDUTY_ROUTING_KEY: ${{ secrets.PAGERDUTY_ROUTING_KEY }}
         run: |
           curl -X POST \
             --header "Content-Type: application/json" \
