@@ -12,8 +12,11 @@ jobs:
     container: python:3.9-slim
 
     steps:
+      - name: Install curl
+        run: apt-get update && apt-get install -y curl
+
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
@@ -23,21 +26,12 @@ jobs:
       - name: Run tests
         run: |
           pip install pytest
-          pytest
+          pytest nonexistent_folder
 
       - name: Notify PagerDuty on failure
         if: failure()
         run: |
           curl -X POST \
             --header "Content-Type: application/json" \
-            --data '{
-              "routing_key": "${{ secrets.PAGERDUTY_ROUTING_KEY }}",
-              "event_action": "trigger",
-              "payload": {
-                "summary": "GitHub Actions workflow failed",
-                "severity": "critical",
-                "source": "GitHub Actions"
-              }
-            }' \
+            --data "{\"routing_key\": \"${{ secrets.PAGERDUTY_ROUTING_KEY }}\", \"event_action\": \"trigger\", \"payload\": {\"summary\": \"GitHub Actions workflow failed\", \"severity\": \"critical\", \"source\": \"GitHub Actions\"}}" \
             https://events.pagerduty.com/v2/enqueue
-            \\00909
